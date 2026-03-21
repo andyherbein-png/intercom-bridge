@@ -1,0 +1,6 @@
+dasbus>=1.6
+pyudev>=0.24
+gpiozero>=2.0
+luma.oled>=3.13
+pytest>=8.0
+pytest-mock>=3.12
