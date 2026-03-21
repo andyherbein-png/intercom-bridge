@@ -135,10 +135,12 @@ This preserves the "secret" nature while being discoverable on an iPhone.
 ### 4.3 Interaction Model (Touch)
 
 1. **Select piece**: Tap any square containing your piece → square highlights in cyan (`#AAFFEE`)
-2. **See legal moves**: Highlighted squares show small green dots (`#00CC55`)
+2. **See legal moves**: Highlighted squares show small green dots (`#AAFF66`, `--lgreen`)
 3. **Move**: Tap a highlighted legal-move square → piece moves; status updates
 4. **Cancel**: Tap elsewhere or tap the same square again → deselect
 5. **CPU response**: Status shows "COMPUTER THINKING..." → move plays after ~0.5–2s
+
+6. **Undo**: Tap UNDO button → reverts both the CPU's last move and the player's last move (2 half-moves). Only available when there are moves to undo and CPU is not thinking. Unavailable after game over.
 
 No drag-and-drop. No gestures beyond tap. iPhone-friendly.
 
@@ -202,7 +204,8 @@ Inherits the established C64 design system:
 | White pieces | White | `#FFFFFF` |
 | Black pieces | Yellow | `#EEEE77` (visibility on dark blue) |
 | Selected square | Cyan bg | `#AAFFEE` |
-| Legal move dot | Light green | `#AAFF66` |
+| Legal move dot (empty square) | Light green | `#AAFF66` (`--lgreen`) — small centered circle |
+| Legal move (capture) | Light green | `#AAFF66` — thin border ring on cell |
 | Status text | Light green | `#AAFF66` |
 | Move history | Cyan | `#AAFFEE` |
 | Error messages | Light red | `#FF7777` |
@@ -305,9 +308,9 @@ A depth-limited minimax with alpha-beta pruning:
 
 ```
 Difficulty  Depth  Approx Time (iPhone)  Approx ELO
-NOVICE      2      <100ms                ~1200
-ADVANCED    3      ~200–500ms            ~1500
-MASTER      4–5    ~1–3s                 ~1700–1800
+NOVICE      1      <50ms                 ~1000
+ADVANCED    3      ~200–500ms            ~1400
+MASTER      5      ~1–3s                 ~1700–1800
 ```
 
 Piece-square tables for positional evaluation (same tables used in classic BASIC chess programs from 1980s magazines). No opening book. Captures and checks prioritized in move ordering.
