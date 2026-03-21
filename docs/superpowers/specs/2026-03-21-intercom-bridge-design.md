@@ -1,12 +1,12 @@
-# Intercom-to-Wireless Audio Bridge — Design Specification
+# MiniHop — Intercom-to-Wireless Audio Bridge Design Specification
 **Date:** 2026-03-21
-**Status:** Draft v1.1
+**Status:** Draft v1.2
 
 ---
 
 ## 1. Product Overview
 
-A compact hardware/software bridge that connects professional intercom systems to wireless headsets (Bluetooth or DECT). Designed for stage managers, camera operators, and keypanel users who need wireless freedom without abandoning their existing intercom infrastructure.
+**MiniHop** is a compact hardware/software bridge that connects professional intercom systems to wireless headsets (Bluetooth or DECT). Designed for stage managers, camera operators, and keypanel users who need wireless freedom without abandoning their existing intercom infrastructure.
 
 **Target hardware:** Raspberry Pi Zero 2W (primary), Raspberry Pi 4 (future AES67 variant)
 **Form factor:** Small project box, USB-C powered (battery or wall wart)
@@ -67,7 +67,9 @@ Two rotary encoders with push buttons (Alps EC11 or Bourns PEC11R):
 
 ## 3. Operating Modes
 
-### 3.1 Dynamic Mode (Default)
+Three modes are available, selectable via on-device menu or web UI. Stored in `config.json` as `operation_mode`.
+
+### 3.1 Dynamic Mode (Default) — `"dynamic"`
 
 Button-triggered gate with holdover. The term "gate" describes the hold-timer behavior: the 2-way path stays open (held) for a configurable duration after PTT is released, preventing rapid profile churn during conversation. There is no audio-level detection — PTT button press is the only trigger.
 
@@ -76,13 +78,25 @@ Button-triggered gate with holdover. The term "gate" describes the hold-timer be
 - Timer resets on each PTT press while in TALK state
 - After hold expires → return to listen-only (A2DP for BT)
 
-### 3.2 Permanent 2-Way Mode
+### 3.2 Latch Talk Mode — `"latch"`
+
+Toggle-style PTT. First press engages talk; second press disengages. No hold timer.
+
+- PTT press (first) → engage full-duplex, green LED solid, OLED shows `LATCHED`
+- PTT press (second) → disengage, return to listen-only
+- Designed for keypanel users who use the panel's own talk keys to control channel selection — MiniHop mirrors that state on the wireless side
+
+**Keypanel use case:** When connected to a keypanel (4-wire or 5-pin XLR), the user activates a talk key on the panel to speak to a channel. They press MiniHop's PTT once to latch wireless talk on for that conversation, then press again when done. This avoids holding a button while also working the keypanel.
+
+**BT note:** For BT, latch mode keeps HFP engaged for the duration of the latched session (no A2DP reversion between key presses).
+
+### 3.3 Permanent 2-Way Mode — `"permanent"`
 
 HFP/full-duplex locked on until toggled off. Activated via:
 - On-device menu
 - Web UI
 
-Use case: extended intercom conversation where profile switching latency would be disruptive.
+Use case: extended intercom conversation where any interruption in the mic path would be disruptive.
 
 ---
 
@@ -209,7 +223,21 @@ TALK (mic opens — immediate, <50ms, green LED solid)
 IDLE (mic closes, after hold expires)
 ```
 
-### 6.3 Permanent 2-Way Mode
+### 6.3 Latch Talk Mode
+
+```
+IDLE (listen-only)
+  │ PTT pressed (first press)
+  ▼
+TALK (mic open, green LED solid, OLED shows "LATCHED")
+  │ PTT pressed (second press)
+  ▼
+IDLE (listen-only)
+```
+
+No hold timer. BT stays in HFP for the full latched session.
+
+### 6.4 Permanent 2-Way Mode
 
 Both paths stay in TALK state (mic open) indefinitely until the mode is toggled off via menu or web UI. Hold timer is not started on PTT release.
 
@@ -226,14 +254,16 @@ The A2DP→HFP transition is a joint operation between `bluetooth_manager.py` an
 
 Reverse (TALK → IDLE): `state_machine` calls `audio_router.reroute_for_a2dp()` then `bluetooth_manager.switch_to_a2dp()`.
 
-### 6.5 LED State Summary
+### 6.5 LED State Summary (updated for latch)
 
 | State | LED Pattern |
 |-------|------------|
 | No headset | Red slow blink |
 | BT connecting | Amber fast blink |
 | BT SWITCHING | Amber slow blink |
-| TALK (active) | Green solid |
+| TALK — dynamic/holdover | Green solid |
+| TALK — latched | Green fast blink (distinguishes latch from permanent) |
+| TALK — permanent | Green solid |
 | IDLE (connected) | Green slow blink |
 | Hotspot active | Blue slow blink |
 | Error | Red rapid blink |
@@ -277,7 +307,7 @@ Commodore 64 / PETSCII design language:
 - Active profile indicator (A/B/C/D badge)
 - Input/output level sliders (read-only display + tap to adjust)
 - Headset status (BT device name + RSSI, or DECT connected/disconnected)
-- Mode toggle: DYNAMIC ↔ PERMANENT 2-WAY
+- Mode selector: DYNAMIC / LATCH / PERMANENT 2-WAY (3-way toggle)
 - Quick-access: BT Pairing, Settings
 
 **BT Pairing**
@@ -358,8 +388,8 @@ All modules run as a single Python process managed by a **systemd unit file** (`
   "bt_active_mac": "XX:XX:XX:XX:XX:XX",
   "bt_max_paired_devices": 5,
   "dect_dongle_vid_pid": "auto",
-  "operation_mode": "dynamic",
-  "hold_time_ms": 3000,
+  "operation_mode": "dynamic",   // "dynamic" | "latch" | "permanent"
+  "hold_time_ms": 3000,           // only applies in dynamic mode
   "profiles": {
     "xlr5_bt":   { "input_db": 20, "output_db": 0 },
     "xlr5_dect": { "input_db": 20, "output_db": 0 },
