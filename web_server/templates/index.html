@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>INTERCOM BRIDGE</title>
+<style>
+@import url('https://fonts.cdnfonts.com/css/c64-pro-mono');
+
+:root {
+  --bg:      #20398D;
+  --border:  #6076C5;
+  --text:    #6076C5;
+  --white:   #FFFFFF;
+  --cyan:    #AAFFEE;
+  --yellow:  #EEEE77;
+  --green:   #00CC55;
+  --lgreen:  #AAFF66;
+  --lred:    #FF7777;
+  --orange:  #DD8855;
+  --violet:  #CC44CC;
+  --grey:    #777777;
+  --dark:    #10206d;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: #111;
+  font-family: 'C64 Pro Mono', 'C64_Pro_Mono-STYLE', 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px 8px 32px;
+}
+
+.phone-shell {
+  width: min(375px, 100vw - 16px);
+  background: #1a1a1a;
+  border-radius: 44px;
+  padding: 16px 12px;
+  box-shadow: 0 0 0 2px #333, 0 0 0 4px #1a1a1a, 0 8px 40px rgba(0,0,0,0.7);
+  position: relative;
+}
+.phone-notch {
+  width: 80px; height: 20px;
+  background: #1a1a1a;
+  border-radius: 0 0 14px 14px;
+  margin: 0 auto 8px;
+}
+.phone-home {
+  width: 42px; height: 42px;
+  background: #222; border-radius: 50%;
+  margin: 10px auto 0;
+  border: 2px solid #333;
+}
+
+.c64-screen {
+  background: var(--bg);
+  border: 12px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: 'C64 Pro Mono', 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
+
+.c-bar {
+  background: var(--border);
+  color: var(--bg);
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.c-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.boot-header {
+  color: var(--white);
+  font-size: 11px;
+  line-height: 1.8;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--dark);
+  padding-bottom: 8px;
+}
+
+.cursor {
+  display: inline-block;
+  width: 8px; height: 11px;
+  background: var(--text);
+  vertical-align: bottom;
+  animation: blink 1.1s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.c-sec {
+  color: var(--yellow);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  margin: 10px 0 5px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 10px;
+  border: 1px solid;
+  letter-spacing: 0.08em;
+}
+.badge-idle    { color: var(--lgreen);  border-color: var(--lgreen); }
+.badge-talk    { color: var(--green);   border-color: var(--green);   background: rgba(0,204,85,0.1); }
+.badge-switch  { color: var(--orange);  border-color: var(--orange); }
+.badge-none    { color: var(--lred);    border-color: var(--lred); }
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--dark);
+  font-size: 10px;
+}
+.info-label { color: var(--grey); }
+.info-val   { color: var(--cyan); }
+
+.mode-row {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0;
+}
+.mode-btn {
+  flex: 1;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 9px;
+  padding: 6px 2px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  min-height: 36px;
+}
+.mode-btn.active {
+  background: var(--border);
+  color: var(--bg);
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 4px 0;
+}
+.profile-card {
+  border: 1px solid var(--dark);
+  padding: 5px 6px;
+  font-size: 9px;
+}
+.profile-key  { color: var(--yellow); margin-bottom: 3px; }
+.profile-line { color: var(--cyan); }
+
+.slider-wrap { margin: 4px 0; }
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  margin-bottom: 2px;
+}
+.slider-label span:first-child { color: var(--grey); }
+.slider-label span:last-child  { color: var(--cyan); }
+input[type=range] {
+  width: 100%;
+  accent-color: var(--cyan);
+  height: 16px;
+}
+
+.c-btn {
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+  padding: 9px 6px;
+  border: 1px solid;
+  cursor: pointer;
+  min-height: 36px;
+  background: transparent;
+  width: 100%;
+  margin-top: 6px;
+}
+.c-btn.primary { background: var(--cyan); color: var(--bg); border-color: var(--cyan); }
+.c-btn.neutral { color: var(--text); border-color: var(--border); }
+.c-btn.easter  { color: var(--violet); border-color: var(--violet); font-size: 9px; }
+
+.c-footer {
+  padding: 6px 10px 8px;
+  font-size: 9px;
+  color: var(--violet);
+  text-align: center;
+  border-top: 1px solid var(--dark);
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toast {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--border);
+  color: var(--bg);
+  padding: 6px 14px;
+  font-family: inherit;
+  text-transform: uppercase;
+  font-size: 10px;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+  <div class="phone-notch"></div>
+
+  <div class="c64-screen">
+    <div class="c-bar">
+      &#9658; INTERCOM BRIDGE
+      <span style="font-size:9px;opacity:0.7;">V0.1</span>
+    </div>
+
+    <div class="c-body">
+      <!-- Boot header -->
+      <div class="boot-header">
+        <div>**** INTERCOM BRIDGE BASIC V0.1 ****</div>
+        <div>64K RAM SYSTEM  READY.<span class="cursor"></span></div>
+      </div>
+
+      <!-- Current state -->
+      <div class="c-sec">&#9658; STATUS</div>
+      <div class="info-row">
+        <span class="info-label">STATE</span>
+        <span class="info-val">
+          <span class="status-badge
+            {% if state == 'TALK' %}badge-talk
+            {% elif state == 'SWITCHING' %}badge-switch
+            {% elif state == 'NO_HEADSET' %}badge-none
+            {% else %}badge-idle{% endif %}">
+            {{ state }}
+          </span>
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">MODE</span>
+        <span class="info-val" id="mode-display">{{ cfg.operation_mode if cfg else 'DYNAMIC' }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">BT DEVICE</span>
+        <span class="info-val" id="bt-mac">
+          {{ cfg.bt_active_mac if cfg and cfg.bt_active_mac else '-- NONE --' }}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">HOLD TIME</span>
+        <span class="info-val" id="hold-display">{{ cfg.hold_time_ms if cfg else 3000 }}MS</span>
+      </div>
+
+      <!-- Mode selector -->
+      <div class="c-sec">&#9658; OPERATION MODE</div>
+      <div class="mode-row">
+        <button class="mode-btn {% if not cfg or cfg.operation_mode == 'dynamic' %}active{% endif %}"
+                onclick="setMode('dynamic')" id="mode-dynamic">DYNAMIC</button>
+        <button class="mode-btn {% if cfg and cfg.operation_mode == 'latch' %}active{% endif %}"
+                onclick="setMode('latch')" id="mode-latch">LATCH</button>
+        <button class="mode-btn {% if cfg and cfg.operation_mode == 'permanent' %}active{% endif %}"
+                onclick="setMode('permanent')" id="mode-perm">PERMANENT</button>
+      </div>
+
+      <!-- Hold time slider (dynamic mode only) -->
+      <div class="slider-wrap" id="hold-wrap">
+        <div class="slider-label">
+          <span>HOLD TIME (DYNAMIC)</span>
+          <span id="hold-val">{{ cfg.hold_time_ms if cfg else 3000 }}MS</span>
+        </div>
+        <input type="range" min="500" max="10000" step="250"
+               value="{{ cfg.hold_time_ms if cfg else 3000 }}"
+               id="hold-slider" oninput="updateHold(this.value)">
+      </div>
+
+      <!-- Level profiles -->
+      <div class="c-sec">&#9658; LEVEL PROFILES</div>
+      <div class="profile-grid" id="profile-grid">
+        {% if cfg %}
+          {% for key in ['xlr5_bt', 'xlr5_dect', 'wire4_bt', 'wire4_dect'] %}
+          {% set p = cfg.get_profile(key) %}
+          <div class="profile-card">
+            <div class="profile-key">{{ key.replace('_', '-') }}</div>
+            <div class="profile-line">IN: {{ p.input_db }}DB</div>
+            <div class="profile-line">OUT: {{ p.output_db }}DB</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="profile-card" style="grid-column:1/-1;color:var(--grey);">
+            NO CONFIG LOADED
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Save button -->
+      <button class="c-btn primary" onclick="saveConfig()">SAVE SETTINGS</button>
+
+      <!-- Easter egg hint / secret button -->
+      <div class="c-sec" style="margin-top:14px;">&#9658; ABOUT</div>
+      <div class="info-row">
+        <span class="info-label">FIRMWARE</span>
+        <span class="info-val">V0.1.0-ALPHA</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">PLATFORM</span>
+        <span class="info-val">RPI ZERO 2W</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">HOT-SPOT</span>
+        <span class="info-val">{{ cfg.hotspot_ssid if cfg else 'MINIHOP-0000' }}</span>
+      </div>
+
+    </div><!-- c-body -->
+
+    <div class="c-footer" id="easter-trigger"
+         onclick="easterTap()" title="&#9733;">
+      &#9733; IN HONOR OF OPEN SOURCE DEVELOPERS &#9733;
+    </div>
+  </div><!-- c64-screen -->
+
+  <div class="phone-home"></div>
+</div><!-- phone-shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Mode selector ──────────────────────────────────────────────
+function setMode(mode) {
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({operation_mode: mode})
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      ['dynamic','latch','perm'].forEach(m => {
+        document.getElementById('mode-' + m).classList.remove('active');
+      });
+      const idMap = {dynamic:'mode-dynamic', latch:'mode-latch', permanent:'mode-perm'};
+      document.getElementById(idMap[mode]).classList.add('active');
+      document.getElementById('mode-display').textContent = mode.toUpperCase();
+      showToast('MODE: ' + mode.toUpperCase());
+    }
+  }).catch(() => showToast('ERROR — TRY AGAIN'));
+}
+
+// ── Hold-time slider ───────────────────────────────────────────
+function updateHold(v) {
+  document.getElementById('hold-val').textContent = v + 'MS';
+  document.getElementById('hold-display').textContent = v + 'MS';
+}
+
+// ── Save config ────────────────────────────────────────────────
+function saveConfig() {
+  const holdMs = parseInt(document.getElementById('hold-slider').value);
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({hold_time_ms: holdMs})
+  }).then(r => r.json()).then(d => {
+    showToast(d.ok ? 'SAVED OK' : 'SAVE FAILED');
+  }).catch(() => showToast('ERROR'));
+}
+
+// ── Easter egg — triple tap on footer ★ ───────────────────────
+let easterTaps = 0, easterTimer = null;
+function easterTap() {
+  easterTaps++;
+  clearTimeout(easterTimer);
+  if (easterTaps >= 3) {
+    easterTaps = 0;
+    window.location.href = '/chess';
+    return;
+  }
+  easterTimer = setTimeout(() => { easterTaps = 0; }, 2000);
+}
+
+// ── Toast notification ─────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── Poll status every 3 seconds ────────────────────────────────
+setInterval(() => {
+  fetch('/api/status').then(r => r.json()).then(d => {
+    const stateEl = document.querySelector('.status-badge');
+    if (stateEl) {
+      stateEl.textContent = d.state;
+      stateEl.className = 'status-badge';
+      if (d.state === 'TALK') stateEl.classList.add('badge-talk');
+      else if (d.state === 'SWITCHING') stateEl.classList.add('badge-switch');
+      else if (d.state === 'NO_HEADSET') stateEl.classList.add('badge-none');
+      else stateEl.classList.add('badge-idle');
+    }
+  }).catch(() => {});
+}, 3000);
+</script>
+
+</body>
+</html>
