@@ -2,7 +2,6 @@
 import os
 import tempfile
 import time
-import pytest
 from unittest.mock import patch
 
 
@@ -23,7 +22,7 @@ def test_full_dect_ptt_cycle():
             cfg = Config(cfg_path)
             cfg.hold_time_ms = 100
             sm = StateMachine(cfg)
-            router = AudioRouter()
+            AudioRouter()
             led = LedManager(pin=17)
 
             state_log = []

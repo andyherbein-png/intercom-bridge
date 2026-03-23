@@ -4,19 +4,19 @@ import signal
 import sys
 import time
 
+from src.audio_router import AudioRouter
+from src.bluetooth_manager import BluetoothManager
+from src.config import Config
+from src.gpio_handler import GpioHandler
+from src.headset_monitor import HeadsetMonitor
+from src.led_manager import LedManager
+from src.state_machine import StateMachine, State, Event, HeadsetType
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
 )
 logger = logging.getLogger("minihop")
-
-from src.config import Config
-from src.state_machine import StateMachine, State, Event, HeadsetType
-from src.audio_router import AudioRouter
-from src.bluetooth_manager import BluetoothManager
-from src.gpio_handler import GpioHandler
-from src.led_manager import LedManager
-from src.headset_monitor import HeadsetMonitor
 
 CONFIG_PATH = "/home/pi/minihop/config.json"
 

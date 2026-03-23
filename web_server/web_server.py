@@ -4,7 +4,6 @@ MiniHop Flask web server.
 Provides a C64-themed dashboard and REST API for config/status,
 plus the hidden chess easter egg with SSE audio-exit integration.
 """
-import json
 import logging
 import queue
 import sys
@@ -172,5 +171,8 @@ def chess_events():
 if __name__ == "__main__":
     # Standalone dev mode: load config from default path or create defaults
     _config = Config()
-    _get_state = lambda: "IDLE"
+
+    def _get_state():
+        return "IDLE"
+
     app.run(host="127.0.0.1", port=5000, debug=False)

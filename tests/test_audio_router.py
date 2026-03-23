@@ -1,6 +1,6 @@
 # tests/test_audio_router.py
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from src.audio_router import AudioRouter
 
 

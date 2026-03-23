@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 class AudioRouter:
     """Controls PipeWire audio routing via pw-link/pw-dump/pw-metadata."""
 
+    def __init__(self):
+        self._nodes_cache: Dict[str, str] = {}
+
     def reroute_for_hfp(self):
         """Connect XLR input → HFP mic, HFP speaker → XLR output."""
         nodes = self._get_nodes()
@@ -17,8 +20,14 @@ class AudioRouter:
         hfp_sink = nodes.get("bt_hfp_sink")
         hfp_src = nodes.get("bt_hfp_source")
         if not all([xlr_src, hfp_sink]):
-            logger.warning("reroute_for_hfp: required nodes not found — aborting")
-            return
+            # If cache failed, try one fresh pull before giving up
+            nodes = self._get_nodes(force_refresh=True)
+            xlr_src = nodes.get("xlr_source")
+            hfp_sink = nodes.get("bt_hfp_sink")
+            hfp_src = nodes.get("bt_hfp_source")
+            if not all([xlr_src, hfp_sink]):
+                logger.warning("reroute_for_hfp: required nodes not found — aborting")
+                return
         self._unlink_all()
         self._link(xlr_src, hfp_sink)
         if hfp_src:
@@ -33,8 +42,12 @@ class AudioRouter:
         xlr_src = nodes.get("xlr_source")
         a2dp_sink = nodes.get("bt_a2dp_sink")
         if not all([xlr_src, a2dp_sink]):
-            logger.warning("reroute_for_a2dp: required nodes not found — aborting")
-            return
+            nodes = self._get_nodes(force_refresh=True)
+            xlr_src = nodes.get("xlr_source")
+            a2dp_sink = nodes.get("bt_a2dp_sink")
+            if not all([xlr_src, a2dp_sink]):
+                logger.warning("reroute_for_a2dp: required nodes not found — aborting")
+                return
         self._unlink_all()
         self._link(xlr_src, a2dp_sink)
         logger.info("Rerouted for A2DP (listen)")
@@ -46,8 +59,13 @@ class AudioRouter:
         dect_sink = nodes.get("dect_sink")
         dect_src = nodes.get("dect_source")
         if not all([xlr_src, dect_sink]):
-            logger.warning("reroute_for_dect: required nodes not found")
-            return
+            nodes = self._get_nodes(force_refresh=True)
+            xlr_src = nodes.get("xlr_source")
+            dect_sink = nodes.get("dect_sink")
+            dect_src = nodes.get("dect_source")
+            if not all([xlr_src, dect_sink]):
+                logger.warning("reroute_for_dect: required nodes not found")
+                return
         self._unlink_all()
         self._link(xlr_src, dect_sink)
         if talk and dect_src:
@@ -74,8 +92,11 @@ class AudioRouter:
         except FileNotFoundError:
             logger.warning("pw-metadata not found — running without PipeWire?")
 
-    def _get_nodes(self) -> Dict[str, str]:
-        """Query pw-dump and return a dict of logical role → node ID."""
+    def _get_nodes(self, force_refresh: bool = False) -> Dict[str, str]:
+        """Query pw-dump and return a dict of logical role → node ID. Caches results."""
+        if self._nodes_cache and not force_refresh:
+            return self._nodes_cache
+
         try:
             result = subprocess.run(
                 ["pw-dump"], capture_output=True, check=False, timeout=2
@@ -83,7 +104,7 @@ class AudioRouter:
             nodes = json.loads(result.stdout)
         except Exception as e:
             logger.warning("pw-dump failed: %s", e)
-            return {}
+            return self._nodes_cache  # return stale cache on failure
 
         role_map: Dict[str, str] = {}
         for node in nodes:
@@ -111,6 +132,7 @@ class AudioRouter:
                 else:
                     role_map["dect_sink"] = nid
 
+        self._nodes_cache = role_map
         return role_map
 
     def _link(self, src_id: str, dst_id: str):

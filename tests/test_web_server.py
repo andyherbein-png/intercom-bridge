@@ -1,7 +1,5 @@
 # tests/test_web_server.py
-import json
 import os
-import tempfile
 
 import pytest
 
