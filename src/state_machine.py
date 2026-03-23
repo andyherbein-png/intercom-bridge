@@ -1,5 +1,4 @@
 # src/state_machine.py
-import time
 import threading
 from enum import Enum, auto
 from typing import Callable, List, Optional
